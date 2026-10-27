@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PolyTranslate</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --card: #ffffff; --text: #17233b; --muted: #6b778c; --line: #dbe2ee;
+    --brand: #1f6feb; --brand-dark: #1858c0; --accent: #0e9aa7; --danger: #c62828;
+    --out: #eef5ff; --shadow: 0 6px 24px rgba(20, 40, 90, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0e1524; --card: #162036; --text: #e8eefb; --muted: #93a1bd; --line: #2a3857;
+            --brand: #4c8dff; --brand-dark: #3b78e6; --accent: #34c3cf; --danger: #ff7b7b;
+            --out: #12304f; --shadow: 0 6px 24px rgba(0, 0, 0, .35); }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background: linear-gradient(135deg, #12305c, #0e9aa7); color: #fff; padding: 22px 16px 54px; text-align: center; }
+  header h1 { margin: 0; font-size: 1.7rem; letter-spacing: .3px; }
+  header p { margin: 4px 0 0; opacity: .85; font-size: .9rem; }
+  main { max-width: 1000px; margin: -34px auto 40px; padding: 0 14px; }
+  .card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; }
+  .bar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+  select, button, textarea { font: inherit; color: var(--text); }
+  select { flex: 1; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  .icon { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 9px 12px; cursor: pointer; }
+  .icon:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+  .icon:disabled { opacity: .4; cursor: not-allowed; }
+  .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 700px) { .panes { grid-template-columns: 1fr; } }
+  .pane { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  textarea, .output { flex: 1; min-height: 190px; padding: 14px; border: 0; resize: vertical; background: transparent;
+                      font-size: 1.1rem; line-height: 1.55; outline: none; white-space: pre-wrap; word-break: break-word; }
+  .output { background: var(--out); }
+  .output.empty { color: var(--muted); }
+  .tools { display: flex; gap: 6px; align-items: center; padding: 8px 10px; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); }
+  .tools .grow { flex: 1; }
+  .primary { background: var(--brand); color: #fff; border: 0; border-radius: 10px; padding: 11px 22px; font-weight: 600; cursor: pointer; }
+  .primary:hover:not(:disabled) { background: var(--brand-dark); }
+  .primary:disabled { opacity: .6; cursor: wait; }
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .row label { color: var(--muted); font-size: .9rem; display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  #status { flex: 1; min-width: 160px; color: var(--muted); font-size: .9rem; }
+  #status.error { color: var(--danger); }
+  .history { margin-top: 18px; }
+  .history h2 { font-size: 1rem; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; }
+  .link { background: none; border: 0; color: var(--brand); cursor: pointer; font-size: .85rem; }
+  .item { display: block; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line);
+          padding: 10px 4px; cursor: pointer; }
+  .item:hover { background: var(--out); }
+  .item small { color: var(--muted); display: block; }
+  .item b { font-weight: 600; }
+  .hint { color: var(--muted); font-size: .85rem; text-align: center; margin-top: 14px; }
+  .mic.on { background: var(--danger); color: #fff; border-color: var(--danger); }
+</style>
+</head>
+<body>
+<header>
+  <h1>PolyTranslate</h1>
+  <p>Translate text between languages &middot; SAM AI Technologies &middot; Task 2</p>
+</header>
+
+<main>
+  <div class="card">
+    <div class="bar">
+      <select id="source" aria-label="Source language"></select>
+      <button class="icon" id="swap" title="Swap languages" aria-label="Swap languages">&#8644;</button>
+      <select id="target" aria-label="Target language"></select>
+    </div>
+
+    <div class="panes">
+      <div class="pane">
+        <textarea id="input" maxlength="5000" placeholder="Type or paste text here..." aria-label="Text to translate"></textarea>
+        <div class="tools">
+          <button class="icon mic" id="mic" title="Speak instead of typing" aria-label="Dictate">&#127908;</button>
+          <button class="icon" id="clear" title="Clear" aria-label="Clear">&#10005;</button>
+          <span class="grow"></span><span id="count">0 / 5000</span>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="output empty" id="output" aria-live="polite">Translation appears here</div>
+        <div class="tools">
+          <button class="icon" id="speak" title="Listen" aria-label="Listen" disabled>&#128266;</button>
+          <button class="icon" id="copy" title="Copy" aria-label="Copy" disabled>&#128203;</button>
+          <span class="grow"></span><span id="detected"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="primary" id="go">Translate</button>
+      <label><input type="checkbox" id="live"> Translate as I type</label>
+      <span id="status"></span>
+    </div>
+  </div>
+
+  <div class="card history" id="historyCard" hidden>
+    <h2>Recent translations <button class="link" id="clearHistory">Clear</button></h2>
+    <div id="history"></div>
+  </div>
+  <p class="hint">Tip: press Ctrl + Enter to translate. Speech uses your browser's built-in voices.</p>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let languages = [], lastResult = null, timer = null, recognition = null;
+
+const tagFor = (code) => (languages.find((l) => l.code === code) || {}).speech || code;
+const nameFor = (code) => (languages.find((l) => l.code === code) || {}).name || code;
+const RTL = ["ar", "he", "fa", "ur"];
+
+function setStatus(text, isError = false) {
+  $("status").textContent = text;
+  $("status").className = isError ? "error" : "";
+}
+
+async function api(path, body) {
+  const res = await fetch(path, body === undefined ? {} : {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Something went wrong");
+  return data;
+}
+
+async function init() {
+  languages = (await api("/api/languages")).languages;
+  $("source").add(new Option("Detect language", "auto"));
+  for (const l of languages) { $("source").add(new Option(l.name, l.code)); $("target").add(new Option(l.name, l.code)); }
+  $("source").value = localStorage.getItem("pt-source") || "auto";
+  $("target").value = localStorage.getItem("pt-target") || "hi";
+  setupSpeech();
+  loadHistory();
+  $("input").focus();
+}
+
+async function translate() {
+  const text = $("input").value.trim();
+  if (!text) { setStatus("Type something to translate.", true); return; }
+  $("go").disabled = true;
+  setStatus("Translating...");
+  try {
+    const r = await api("/api/translate", { text, source: $("source").value, target: $("target").value });
+    showResult(r);
+    loadHistory();
+  } catch (err) {
+    setStatus(err.message, true);
+  } finally {
+    $("go").disabled = false;
+  }
+}
+
+function showResult(r) {
+  lastResult = r;
+  const out = $("output");
+  out.textContent = r.translation;
+  out.className = "output";
+  out.lang = tagFor(r.target);
+  out.dir = RTL.includes(r.target) ? "rtl" : "ltr";
+  $("speak").disabled = $("copy").disabled = false;
+  $("detected").textContent = r.source === "auto" && r.detected ? "Detected: " + nameFor(r.detected) : "";
+  setStatus((r.cached ? "From cache" : "via " + r.provider));
+}
+
+function loadHistory() {
+  api("/api/history").then(({ items }) => {
+    $("historyCard").hidden = items.length === 0;
+    const box = $("history");
+    box.replaceChildren();
+    for (const it of items.slice(0, 8)) {
+      const b = document.createElement("button");
+      b.className = "item";
+      const t = document.createElement("b"); t.textContent = it.text.length > 70 ? it.text.slice(0, 70) + "..." : it.text;
+      const s = document.createElement("small");
+      s.textContent = `${it.translation.slice(0, 70)}  |  ${it.source_name} to ${it.target_name}  |  ${it.time}`;
+      b.append(t, s);
+      b.onclick = () => {
+        $("input").value = it.text; updateCount();
+        $("source").value = it.source; $("target").value = it.target; showResult(it);
+      };
+      box.append(b);
+    }
+  }).catch(() => {});
+}
+
+function swap() {
+  let src = $("source").value;
+  if (src === "auto") src = lastResult && lastResult.detected ? lastResult.detected : null;
+  if (!src || !languages.some((l) => l.code === src)) { setStatus("Choose a source language to swap.", true); return; }
+  const tgt = $("target").value;
+  $("source").value = tgt; $("target").value = src;
+  if (lastResult) { $("input").value = lastResult.translation; updateCount(); translate(); }
+}
+
+function updateCount() { $("count").textContent = `${$("input").value.length} / 5000`; }
+
+// ---- speech: browser text-to-speech and dictation -------------------------
+function setupSpeech() {
+  if (!("speechSynthesis" in window)) $("speak").hidden = true;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { $("mic").hidden = true; return; }
+  recognition = new SR();
+  recognition.interimResults = false;
+  recognition.onresult = (e) => {
+    $("input").value = (($("input").value + " ").trimStart() + e.results[0][0].transcript).trim();
+    updateCount(); translate();
+  };
+  recognition.onend = () => $("mic").classList.remove("on");
+  recognition.onerror = (e) => { $("mic").classList.remove("on"); setStatus("Microphone: " + e.error, true); };
+}
+
+function speak() {
+  if (!lastResult) return;
+  const u = new SpeechSynthesisUtterance(lastResult.translation);
+  u.lang = tagFor(lastResult.target);
+  const voice = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith(u.lang.slice(0, 2).toLowerCase()));
+  if (voice) u.voice = voice;
+  else if (speechSynthesis.getVoices().length) setStatus(`No ${nameFor(lastResult.target)} voice installed on this device.`, true);
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+function dictate() {
+  if (!recognition) return;
+  const src = $("source").value;
+  recognition.lang = src === "auto" ? navigator.language : tagFor(src);
+  $("mic").classList.add("on");
+  try { recognition.start(); } catch (e) { /* already listening */ }
+}
+
+// ---- events -----------------------------------------------------------------
+$("go").onclick = translate;
+$("swap").onclick = swap;
+$("speak").onclick = speak;
+$("mic").onclick = dictate;
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(lastResult.translation); setStatus("Copied to clipboard."); }
+  catch (e) { setStatus("Copy failed - select the text and copy manually.", true); }
+};
+$("clear").onclick = () => { $("input").value = ""; updateCount(); $("input").focus(); };
+$("clearHistory").onclick = async () => { await api("/api/history/clear", {}); loadHistory(); };
+$("source").onchange = () => localStorage.setItem("pt-source", $("source").value);
+$("target").onchange = () => { localStorage.setItem("pt-target", $("target").value); if ($("input").value.trim()) translate(); };
+$("input").addEventListener("input", () => {
+  updateCount();
+  if ($("live").checked) { clearTimeout(timer); timer = setTimeout(translate, 800); }
+});
+$("input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) translate(); });
+if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => {};
+
+init().catch(() => setStatus("Couldn't reach the server. Is web_app.py running?", true));
+</script>
+</body>
+</html>

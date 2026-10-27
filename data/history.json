@@ -1,0 +1,50 @@
+[
+ {
+  "text": "hello",
+  "translation": "नमस्ते",
+  "source": "auto",
+  "target": "hi",
+  "provider": "Google Translate",
+  "detected": "en",
+  "cached": true,
+  "source_name": "English",
+  "target_name": "Hindi",
+  "time": "26 Oct 18:13"
+ },
+ {
+  "text": "hello",
+  "translation": "नमस्ते",
+  "source": "auto",
+  "target": "hi",
+  "provider": "Google Translate",
+  "detected": "en",
+  "cached": true,
+  "source_name": "English",
+  "target_name": "Hindi",
+  "time": "26 Oct 18:13"
+ },
+ {
+  "text": "hello",
+  "translation": "नमस्ते",
+  "source": "auto",
+  "target": "hi",
+  "provider": "Google Translate",
+  "detected": "en",
+  "cached": true,
+  "source_name": "English",
+  "target_name": "Hindi",
+  "time": "26 Oct 18:11"
+ },
+ {
+  "text": "hello",
+  "translation": "नमस्ते",
+  "source": "auto",
+  "target": "hi",
+  "provider": "Google Translate",
+  "detected": "en",
+  "cached": false,
+  "source_name": "English",
+  "target_name": "Hindi",
+  "time": "26 Oct 18:11"
+ }
+]

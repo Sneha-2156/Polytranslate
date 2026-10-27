@@ -1,0 +1,4 @@
+# PolyTranslate needs NO packages to translate (standard library only).
+# Optional, only for text-to-speech in the command line (cli.py --speak):
+# gTTS        # online voices, covers Hindi/Kannada/Tamil/Telugu and more
+# pyttsx3     # offline voices installed on your computer
